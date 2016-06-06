@@ -29,8 +29,8 @@ frameChannel = 4
 frameHeight = 84
 frameWidth = 84
 # buffer to save transition
-bufferSize = 10000
-startSize = batchSize * 3
+bufferSize = 100000
+startSize = 50000
 #
 baseLr = 0.00025
 # parameter--update the target network
@@ -49,13 +49,15 @@ layers = ('conv1', 'conv2', 'conv3', 'fc4', 'value_q')
 # update_layer = ('fc7n', 'fc8n', 'value_q')
 
 # e greedy to choose the way getting action
-eGreedy = 0.1
+eGreedyFinal = 0.1
+finalNum = 1000000
 # alpha: radio of every action
-alpha = 0.1
-tou = 0.6
-updateStep = 10
+tou = 0.99
+updateStep = 10000
 # net update parameter
-updateParam = 1e-3
+updateParam = 1
+# train number in every step
+trainNum = 20
 # reward setting
 successReward = 3
 stepReward = 1

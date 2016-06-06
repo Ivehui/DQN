@@ -109,11 +109,11 @@ def solver(train_net_path, net_type, test_net_path=None, base_lr=0.001):
     s.weight_decay = 5e-4
 
     # Display the current training loss and accuracy every 1000 iterations.
-    s.display = 100
+    s.display = 5000
 
     # Snapshots are files used to store networks we've trained.  Here, we'll
     # snapshot every 10K iterations -- ten times during training.
-    s.snapshot = 100000
+    s.snapshot = 10000
     s.snapshot_prefix = 'models/'+net_type
 
     # Train on the GPU.  Using the CPU to train large networks is very slow.

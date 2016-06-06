@@ -27,7 +27,7 @@ class DqnAgent(object):
         else:
             self.solver.test_nets[0].blobs['frames'].data[...] = frame.copy()
             netOut = self.solver.test_nets[0].forward()
-            return np.where(netOut['value_q'][0] == max(netOut['value_q'][0]))
+            return np.where(netOut['value_q'][0] == max(netOut['value_q'][0]))[0][0]
 
     def train(self, tran, selected):
         self.targetNet.blobs['frames'].data[...] \
@@ -35,7 +35,7 @@ class DqnAgent(object):
         netOut = self.targetNet.forward()
         target = tran.reward[selected] \
                  + pms.discount \
-                   * tran.n_lasr[selected] \
+                   * tran.n_last[selected] \
                    * netOut['value_q'].max(0)
 
         self.solver.net.blobs['target'].data[...] = target

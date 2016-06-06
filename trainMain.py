@@ -78,8 +78,10 @@ if __name__ == '__main__':
         for j in range(pms.frameChannel):
             curFrame[j, ...] = transfer(rgbImage, imageDim)
 
+        rewardSum = 0
         while(done == False):
-            eGreedy = max(pms.eGreedy, 1)
+            eGreedy = max(pms.eGreedyFinal,
+                          1 - testStep * (1 - pms.eGreedyFinal) / pms.finalNum)
             actionNum = agent.act(curFrame, eGreedy)
             reward = 0
             for j in range(pms.frameChannel):
@@ -92,20 +94,23 @@ if __name__ == '__main__':
             tran.saveTran(curFrame, actionNum, reward, done)
             curFrame = nextFrame.copy()
             testStep += 1
+            rewardSum += reward
 
             # training
             overallSize = tran.getBufferSize()
             if overallSize > pms.startSize:
-                selected = np.random.choice(overallSize - 1, pms.batchSize, replace=False)
-                if tran.getIsFull():
-                    selected = selected - overallSize + tran.getSize()
-                # calculate the q_target
-                agent.train(tran, selected)
+                for j in range(pms.trainNum):
+                    selected = np.random.choice(overallSize - 1, pms.batchSize, replace=False)
+                    if tran.getIsFull():
+                        selected = selected - overallSize + tran.getSize()
+                    # calculate the q_target
+                    agent.train(tran, selected)
                 if update_step > pms.updateStep:
                     update_step = 0
                     agent.updateTarget()
                 else:
                     update_step += 1
+        print('No.' + str(testStep) + '   episode:' + str(i) + '   reward:' + str(rewardSum))
 
     # Dump result info to disk
     env.monitor.close()
