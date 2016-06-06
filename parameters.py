@@ -40,7 +40,7 @@ discount = 0.99
 # max_iter
 maxIter = 10000000
 # episode_count
-episodeCount = 500
+episodeCount = 20000
 # size
 actionSize = 6
 
@@ -50,14 +50,11 @@ layers = ('conv1', 'conv2', 'conv3', 'fc4', 'value_q')
 
 # e greedy to choose the way getting action
 eGreedyFinal = 0.1
-finalNum = 1000000
+finalNum = 100000
 # alpha: radio of every action
 tou = 0.99
-updateStep = 10000
+updateStep = 100
 # net update parameter
-updateParam = 1
+updateParam = 0.01
 # train number in every step
 trainNum = 20
-# reward setting
-successReward = 3
-stepReward = 1

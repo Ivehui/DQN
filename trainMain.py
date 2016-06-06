@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     for i in range(pms.episodeCount):
         rgbImage = env.reset()
-        env.render()
+        # env.render()
         done = False
         for j in range(pms.frameChannel):
             curFrame[j, ...] = transfer(rgbImage, imageDim)
@@ -87,7 +87,7 @@ if __name__ == '__main__':
             for j in range(pms.frameChannel):
                 if(done == False):
                     rgbImage, rewardTemp, done, _ = env.step(actionNum)
-                    env.render()
+                    # env.render()
                 nextFrame[j, ...] = transfer(rgbImage, imageDim)
                 reward += rewardTemp
             reward /= pms.frameChannel
