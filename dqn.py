@@ -33,10 +33,14 @@ class DqnAgent(object):
         self.targetNet.blobs['frames'].data[...] \
             = tran.frames[selected + 1].copy()
         netOut = self.targetNet.forward()
-        target = tran.reward[selected] \
-                 + pms.discount \
-                   * tran.n_last[selected] \
-                   * netOut['value_q'].max(0)
+
+        target = np.tile(tran.reward[selected]
+                         + pms.discount
+                         * tran.n_last[selected]
+                         * np.resize(netOut['value_q'].max(1),
+                                     (pms.batchSize, 1)),
+                         (pms.actionSize,)
+                         ) * tran.action[selected]
 
         self.solver.net.blobs['target'].data[...] = target
         self.solver.net.blobs['frames'].data[...] = tran.frames[selected].copy()
