@@ -53,8 +53,8 @@ eGreedyFinal = 0.1
 finalNum = 100000
 # alpha: radio of every action
 tou = 0.99
-updateStep = 100
+updateStep = 1000
 # net update parameter
-updateParam = 0.01
+updateParam = 1
 # train number in every step
-trainNum = 20
+trainNum = 5

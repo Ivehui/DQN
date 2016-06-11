@@ -87,10 +87,10 @@ if __name__ == '__main__':
             for j in range(pms.frameChannel):
                 if(done == False):
                     rgbImage, rewardTemp, done, _ = env.step(actionNum)
-                    # env.render()
                 nextFrame[j, ...] = transfer(rgbImage, imageDim)
                 reward += rewardTemp
-            reward /= pms.frameChannel
+            # env.render()
+            # reward /= pms.frameChannel
             tran.saveTran(curFrame, actionNum, reward, done)
             curFrame = nextFrame.copy()
             testStep += 1
