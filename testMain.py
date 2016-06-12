@@ -1,105 +1,97 @@
-import caffe
-import random
+'''
+@author Ivehui
+@time 2016/06/12
+@function: test the model
+'''
+import logging
+import dqn
 import parameters as pms
-from environment import Environment as Envment
-from transition import Transition as Tran
+import gym
 import numpy as np
-import time
-import os
+import caffe
+from skimage.transform import resize
 
-actionSolver = None
-actionSolver = caffe.get_solver(pms.actionSolverPath)
-result_save = True
-result_file = pms.result_file
-for i in range(199, 200):
-    trained_model = './models/action_iter_'+str(i)+'000.caffemodel'
-    # trained_model = pms.new_model
+def transfer(rgbImage, new_dims):
+    im = np.dot(rgbImage[..., :3],
+                [0.229, 0.587, 0.144])
 
-    # copy params from caffemodel
-    actionSolver.net.copy_from(trained_model)
-    # test net share weights with train net
-    actionSolver.test_nets[0].share_with(actionSolver.net)
+    im_min, im_max = im.min(), im.max()
+    if im_max > im_min:
+        # skimage is fast but only understands {1,3} channel images
+        # in [0, 1].
+        im_std = (im - im_min) / (im_max - im_min)
+        resized_std = resize(im_std, new_dims, order=1)
+        resized_im = resized_std * (im_max - im_min) + im_min
+    else:
+        # the image is a constant -- avoid divide by 0
+        ret = np.empty((new_dims[0], new_dims[1], im.shape[-1]),
+                       dtype=np.float32)
+        ret.fill(im_min)
+        return ret
+    return resized_im.astype(np.float32)
+
+if __name__ == '__main__':
+    # # if isDisplsy == 0: no image plot
+    # isDisplay = 1
+
+    # You can optionally set up the logger. Also fine to set the level
+    # to logging.DEBUG or logging.WARN if you want to change the
+    # amount of output.
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    env = gym.make(pms.gameName)
+
+    # You provide the directory to write to (can be an existing
+    # directory, including one with existing data -- all monitor files
+    # will be namespaced). You can also dump to a tempdir if you'd
+    # like: tempfile.mkdtemp().
+    outdir = '/tmp/DQN-Test-' + pms.gameName
+    env.monitor.start(outdir, force=True, seed=0)
+
+    # This declaration must go *after* the monitor call, since the
+    # monitor's seeding creates a new action_space instance with the
+    # appropriate pseudorandom number generator.
+    model = './models/action_iter_1000000.caffemodel'
+    agent = dqn.DqnAgent(env.action_space, model=model)
     caffe.set_mode_gpu()
 
-    success_cnt = 0
-    for episode in range(50):
-        envment = Envment(episode)
-        enable = 1
-        actionHistory = np.zeros((pms.history_num * pms.actionSize,))
-        num = 0
-        if result_save:
-            folder = 'test/Images' + str(episode)
-            os.makedirs(folder)
-            image_file = './'+folder + '/' + str(num) + '-' + str(int(envment.curIOU*100)) + '.jpg'
-            envment.show_image(file=image_file)
-        while enable:
-            curFrame = envment.get_curFrame()
-            actionSolver.test_nets[0].blobs['frames'].data[...]\
-                = curFrame.copy()
-            actionSolver.test_nets[0].blobs['actionHistory'].data[...]\
-                = actionHistory.copy()
-            net_out = actionSolver.test_nets[0].forward()
-            curAction = np.zeros(pms.actionSize)
-            # print(net_out['value_q'][0])
-            curAction[np.where(net_out['value_q'][0] == max(net_out['value_q'][0]))] = 1
+    imageDim = np.array((pms.frameHeight,
+                         pms.frameWidth))
+    curFrame = np.zeros((pms.frameChannel,
+                         pms.frameHeight,
+                         pms.frameWidth))
+    nextFrame = np.zeros((pms.frameChannel,
+                          pms.frameHeight,
+                          pms.frameWidth))
 
-            envment.take_action(curAction)
-            curReward = envment.get_reward()
-            actionHistory = np.hstack((curAction, actionHistory[pms.actionSize:]))
+    testStep = 0
+    update_step = 0
 
-            num = num + 1
-            if result_save:
-                image_file = './' + folder + '/' + str(num) + '-' + str(int(envment.curIOU * 100)) + '.jpg'
-                envment.show_image(file=image_file)
-            # time.sleep(5)
-            if curAction[pms.actionSize-1] == 1 or num > 30:
-                enable = 0
-                if curReward == pms.successReward:
-                    success_cnt = success_cnt +1
-        # print((i, episode + 1, success_cnt, float(success_cnt) / (episode + 1)))
-    with open(result_file, 'a') as f:
-        f.write("%d, %d, %d, %f" % (i, episode + 1, success_cnt, float(success_cnt)/(episode + 1)))
-    print((i, episode+1, success_cnt, float(success_cnt)/(episode+1)))
+    for i in range(pms.episodeTestCount):
+        rgbImage = env.reset()
+        # env.render()
+        done = False
+        rewardSum = 0
+        while(done == False):
+            actionNum = agent.act(curFrame, 0)
+            reward = 0
+            for j in range(pms.frameChannel):
+                if(done == False):
+                    rgbImage, rewardTemp, done, _ = env.step(actionNum)
+                nextFrame[j, ...] = transfer(rgbImage, imageDim)
+                reward += rewardTemp
+            # env.render()
+            # reward /= pms.frameChannel
+            curFrame = nextFrame.copy()
+            testStep += 1
+            rewardSum += reward
+        print('No.' + str(testStep) + '   episode:' + str(i) + '   reward:' + str(rewardSum))
 
-    success_cnt = 0
-    for episode in range(600, 700):
-        envment = Envment(episode)
-        enable = 1
-        actionHistory = np.zeros((pms.history_num * pms.actionSize,))
-        num = 0
-        if result_save:
-            folder = 'test/Images' + str(episode)
-            os.makedirs(folder)
-            image_file = './' + folder + '/' + str(num) + '-' + str(int(envment.curIOU * 100)) + '.jpg'
-            envment.show_image(file=image_file)
-        while enable:
-            curFrame = envment.get_curFrame()
-            actionSolver.test_nets[0].blobs['frames'].data[...] \
-                = curFrame.copy()
-            actionSolver.test_nets[0].blobs['actionHistory'].data[...] \
-                = actionHistory.copy()
-            net_out = actionSolver.test_nets[0].forward()
-            curAction = np.zeros(pms.actionSize)
-            # print(net_out['value_q'][0])
-            curAction[np.where(net_out['value_q'][0] == max(net_out['value_q'][0]))] = 1
+    # Dump result info to disk
+    env.monitor.close()
 
-            envment.take_action(curAction)
-            curReward = envment.get_reward()
-            actionHistory = np.hstack((curAction, actionHistory[pms.actionSize:]))
-
-            num = num + 1
-            if result_save:
-                image_file = './' + folder + '/' + str(num) + '-' + str(int(envment.curIOU * 100)) + '.jpg'
-                envment.show_image(file=image_file)
-            # time.sleep(5)e
-            if curAction[pms.actionSize - 1] == 1 or num > 30:
-                enable = 0
-                if curReward == pms.successReward:
-                    success_cnt = success_cnt + 1
-        # print((i, episode + 1, success_cnt, float(success_cnt) / (episode + 1 - 600)))
-    with open(result_file, 'a') as f:
-        f.write(", %d, %d, %d, %f\n" % (i, episode + 1 - 600, success_cnt, float(success_cnt) / (episode + 1 - 600)))
-    print((i, episode + 1 - 600, success_cnt, float(success_cnt) / (episode + 1 - 600)))
-
-
-
+    # Upload to the scoreboard. We could also do this from another
+    # process if we wanted.
+    logger.info("Successfully ran RandomAgent. Now trying to upload results to the scoreboard. If it breaks, you can always just try re-uploading the same results.")
+    gym.upload(outdir)

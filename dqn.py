@@ -9,17 +9,17 @@ import parameters as pms
 import numpy as np
 
 class DqnAgent(object):
-    def __init__(self, action_space):
+    def __init__(self, action_space, model=pms.newModel):
         self.action_space = action_space
 
         actionSolver = None
         actionSolver = caffe.get_solver(pms.actionSolverPath)
-        actionSolver.net.copy_from(pms.newModel)
+        actionSolver.net.copy_from(model)
         # test net share weights with train net
         actionSolver.test_nets[0].share_with(actionSolver.net)
         self.solver = actionSolver
 
-        self.targetNet = caffe.Net(pms.actionTestNetPath, pms.newModel, caffe.TEST)
+        self.targetNet = caffe.Net(pms.actionTestNetPath, model, caffe.TEST)
 
     def act(self, frame, greedy):
         if random.uniform(0, 1) < greedy:

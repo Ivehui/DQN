@@ -40,7 +40,9 @@ discount = 0.99
 # max_iter
 maxIter = 10000000
 # episode_count
-episodeCount = 20000
+episodeCount = 200000
+# episode_count
+episodeTestCount = 10
 # size
 actionSize = 6
 
@@ -57,4 +59,4 @@ updateStep = 1000
 # net update parameter
 updateParam = 1
 # train number in every step
-trainNum = 5
+trainNum = 1
