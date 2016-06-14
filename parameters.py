@@ -16,7 +16,7 @@ actionTrainNetPath = 'models/action_train_net.prototxt'
 actionSolverPath = 'models/action_solver.prototxt'
 
 # models
-newModel = './models/new_model.caffemodel'
+newModel = './models/random_model.caffemodel'
 
 # # mean file
 # mean_file = './models/ilsvrc_2012_mean.npy'

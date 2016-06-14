@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # This declaration must go *after* the monitor call, since the
     # monitor's seeding creates a new action_space instance with the
     # appropriate pseudorandom number generator.
-    model = './models/action_iter_1000000.caffemodel'
+    model = './models/action_iter_2000000.caffemodel'
     agent = dqn.DqnAgent(env.action_space, model=model)
     caffe.set_mode_gpu()
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     for i in range(pms.episodeTestCount):
         rgbImage = env.reset()
-        # env.render()
+        env.render()
         done = False
         rewardSum = 0
         while(done == False):
@@ -81,7 +81,7 @@ if __name__ == '__main__':
                     rgbImage, rewardTemp, done, _ = env.step(actionNum)
                 nextFrame[j, ...] = transfer(rgbImage, imageDim)
                 reward += rewardTemp
-            # env.render()
+            env.render()
             # reward /= pms.frameChannel
             curFrame = nextFrame.copy()
             testStep += 1
